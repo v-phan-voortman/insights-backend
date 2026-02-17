@@ -52,3 +52,6 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+/src/insights-backend/appsettings.Development.json
+/src/insights-backend/appsettings.json
+/src/insights-backend/Properties/launchSettings.json
