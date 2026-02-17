@@ -58,3 +58,5 @@ nunit-*.xml
 /src/insights-backend/obj/
 /src/insights-backend/bin/
 /src/insights-backend/.vs/
+/src/insights-backend/Builders/INotificationPayloadBuilder.cs
+/src/insights-backend/Builders/BasicNotification.cs
