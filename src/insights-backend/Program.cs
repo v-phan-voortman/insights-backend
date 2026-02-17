@@ -1,54 +1,39 @@
-
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
-using System.Net;
+using insights_backend.Services;
 
-namespace insights_backend
+namespace insights_backend;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        var jsonPath = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
+        if (string.IsNullOrWhiteSpace(jsonPath))
+            throw new Exception("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.");
+
+        FirebaseApp.Create(new AppOptions
         {
-            var builder = WebApplication.CreateBuilder(args);
-            Console.WriteLine(Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS"));
+            Credential = GoogleCredential.FromFile(jsonPath),
+            ProjectId = builder.Configuration["Firebase:ProjectId"]
+        });
 
-            var jsonPath = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
+        builder.Services.AddSingleton<PushNotificationService>();
+        builder.Services.AddControllers()
+                .AddJsonOptions(
+                    options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+        builder.Services.AddOpenApi();
 
-            if (string.IsNullOrWhiteSpace(jsonPath))
-            {
-                throw new Exception("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.");
-            }
+        var app = builder.Build();
 
-            var credential = GoogleCredential.FromFile(jsonPath);
+        if (app.Environment.IsDevelopment())
+            app.MapOpenApi();
 
-            FirebaseApp.Create(new AppOptions
-            {
-                Credential = credential,
-                ProjectId = builder.Configuration["Firebase:ProjectId"]
-            });
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
-        }
+        app.UseHttpsRedirection();
+        app.UseAuthorization();
+        app.MapControllers();
+        app.Run();
     }
 }

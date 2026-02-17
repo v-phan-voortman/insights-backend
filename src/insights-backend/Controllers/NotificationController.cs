@@ -1,35 +1,60 @@
-﻿using insights_backend.Builder;
+﻿using Microsoft.AspNetCore.Mvc;
+using insights_backend.Models;
+using insights_backend.Builders;
 using insights_backend.Services;
-using Microsoft.AspNetCore.Mvc;
 
-namespace insights_backend.Controllers
+namespace insights_backend.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class NotificationsController : ControllerBase
 {
-    // Controller for handling push notification related endpoints
-    [ApiController]
-    [Route("api/[controller]/send")]
-    public class NotificationController : ControllerBase
+    private readonly PushNotificationService _pushService;
+
+    public NotificationsController(PushNotificationService pushService)
     {
-        private readonly IPushNotificationService _pushNotificationService;
+        _pushService = pushService;
+    }
 
-        public NotificationController(IPushNotificationService pushNotificationService)
+    [HttpGet("ping")]
+    public IActionResult Ping() => Ok("working");
+
+    [HttpPost("send")]
+    public async Task<IActionResult> Send([FromBody] PushNotificationRequest request)
+    {
+        try
         {
-            _pushNotificationService = pushNotificationService;
+            var builder = new BasicNotification(request);
+            var messageId = await _pushService.SendAsync(builder);
+            return Ok(new { success = true, messageId });
         }
-
-        [HttpPost]
-        public async Task<IActionResult> SendPushNotification([FromBody] INotificationPayloadBuilder payloadBuilder)
+        catch (Exception ex)
         {
-            try
-            {
-                await _pushNotificationService.SendAsync(payloadBuilder);
-                return Ok(new { Message = "Notification sent successfully" });
-            }
-            catch (Exception ex)
-            {
-                // Log the exception (not implemented here)
-                return StatusCode(500, new { Message = "An error occurred while sending the notification", Details = ex.Message });
-            }
+            return BadRequest(new { success = false, error = ex.Message });
         }
+    }
 
+    [HttpPost("send-multicast")]
+    public async Task<IActionResult> SendMulticast([FromBody] PushNotificationRequest request)
+    {
+        try
+        {
+            if (request.DeviceTokens == null || request.DeviceTokens.Count == 0)
+                return BadRequest(new { success = false, error = "DeviceTokens is required" });
+
+            var builder = new BasicNotification(request);
+            var response = await _pushService.SendMulticastAsync(builder);
+
+            return Ok(new
+            {
+                success = true,
+                successCount = response.SuccessCount,
+                failureCount = response.FailureCount
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { success = false, error = ex.Message });
+        }
     }
 }

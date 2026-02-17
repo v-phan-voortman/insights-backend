@@ -1,6 +1,18 @@
 @insights_backend_HostAddress = http://localhost:5197
 
-GET {{insights_backend_HostAddress}}/api/notifications
+GET {{insights_backend_HostAddress}}/
+###
+POST {{insights_backend_HostAddress}}/api/notifications/send
 Accept: application/json
+Content-Type: application/json
+
+{
+  "deviceToken": "fDiu_26TRjyHdhjfc1nKqZ:APA91bFzNjmxZAelRkJbLyQoxk2c_zHeVL_BoJfi21EMekL6p_P1E7_jMcbyQy-MQUXCp4AQoiW5NtVUyfX6IUCK0vcceoFFoC2hno96XY5iVm6NrT4roFo",
+  "title": "Hello",
+  "body": "Test notification from backend",
+  "data": {
+    "screen": "home"
+  }
+}
 
 ###

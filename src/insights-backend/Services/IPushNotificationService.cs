@@ -1,5 +1,5 @@
 ﻿using FirebaseAdmin.Messaging;
-using insights_backend.Builder;
+using insights_backend.Builders;
 using insights_backend.Models;
 
 namespace insights_backend.Services
@@ -10,7 +10,7 @@ namespace insights_backend.Services
     public interface IPushNotificationService
     {
         // Method to send a push notification based on the provided request
-        Task SendAsync(INotificationPayloadBuilder builder);
+        Task<string> SendAsync(INotificationPayloadBuilder builder);
         // Method to send multiple push notifications in a batch
         Task<BatchResponse> SendMulticastAsync(INotificationPayloadBuilder builder);
     }

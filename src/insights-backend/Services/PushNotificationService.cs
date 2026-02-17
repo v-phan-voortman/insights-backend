@@ -1,40 +1,95 @@
 ﻿using FirebaseAdmin.Messaging;
-using insights_backend.Builder;
+using insights_backend.Builders;
 using insights_backend.Models;
 
-namespace insights_backend.Services
+namespace insights_backend.Services;
+
+public class PushNotificationService : IPushNotificationService
 {
-    public class PushNotificationService : IPushNotificationService
+    private readonly FirebaseMessaging _messaging;
+
+    public PushNotificationService()
     {
-        private readonly FirebaseMessaging _firebaseMessaging;
-
-        public PushNotificationService(FirebaseMessaging firebaseMessaging)
-        {
-            _firebaseMessaging = firebaseMessaging;
-        }
-        public Task SendAsync(INotificationPayloadBuilder builder)
-        {
-            var request = builder.BuildPayload();
-            var message = MapToFirebaseMessage(request);
-            return _firebaseMessaging.SendAsync(message);
-
-        }
-
-        private Message MapToFirebaseMessage(PushNotificationRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<BatchResponse> SendMulticastAsync(INotificationPayloadBuilder builder)
-        {
-            var request = builder.BuildPayload();
-            var message = MapToFirebaseMulticast(request);
-            return _firebaseMessaging.SendEachForMulticastAsync(message);
-        }
-
-        private MulticastMessage MapToFirebaseMulticast(PushNotificationRequest request)
-        {
-            throw new NotImplementedException();
-        }
+        _messaging = FirebaseMessaging.DefaultInstance;
     }
+
+    public async Task<string> SendAsync(INotificationPayloadBuilder builder)
+    {
+        var request = builder.BuildPayload();
+        var message = BuildMessage(request);
+        return await _messaging.SendAsync(message);
+    }
+
+    public async Task<BatchResponse> SendMulticastAsync(INotificationPayloadBuilder builder)
+    {
+        var request = builder.BuildPayload();
+
+        var multicast = new MulticastMessage
+        {
+            Tokens = request.DeviceTokens,
+            Notification = new Notification
+            {
+                Title = request.Title,
+                Body = request.Body,
+                ImageUrl = request.ImageUrl
+            },
+            Data = request.Data,
+            Android = BuildAndroidConfig(),
+            Apns = BuildApnsConfig()
+        };
+
+        return await _messaging.SendEachForMulticastAsync(multicast);
+    }
+
+    private Message BuildMessage(PushNotificationRequest request)
+    {
+        var message = new Message
+        {
+            Notification = new Notification
+            {
+                Title = request.Title,
+                Body = request.Body,
+                ImageUrl = request.ImageUrl
+            },
+            Data = request.Data,
+            Android = BuildAndroidConfig(),
+            Apns = BuildApnsConfig()
+        };
+
+        // Set targeting - only one should be set
+        if (!string.IsNullOrEmpty(request.DeviceToken))
+            message.Token = request.DeviceToken;
+        else if (!string.IsNullOrEmpty(request.Topic))
+            message.Topic = request.Topic;
+        else if (!string.IsNullOrEmpty(request.Condition))
+            message.Condition = request.Condition;
+
+        return message;
+    }
+
+    private AndroidConfig BuildAndroidConfig()
+    {
+        return new AndroidConfig
+        {
+            Priority = Priority.High,
+            Notification = new AndroidNotification
+            {
+                Sound = "default",
+                ChannelId = "default_channel"
+            }
+        };
+    }
+
+    private ApnsConfig BuildApnsConfig()
+    {
+        return new ApnsConfig
+        {
+            Aps = new Aps
+            {
+                Sound = "default",
+                Badge = 1
+            }
+        };
+    }
+
 }
