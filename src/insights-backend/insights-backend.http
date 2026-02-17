@@ -1,0 +1,6 @@
+@insights_backend_HostAddress = http://localhost:5197
+
+GET {{insights_backend_HostAddress}}/api/notifications
+Accept: application/json
+
+###

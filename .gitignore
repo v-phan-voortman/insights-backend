@@ -55,3 +55,6 @@ nunit-*.xml
 /src/insights-backend/appsettings.Development.json
 /src/insights-backend/appsettings.json
 /src/insights-backend/Properties/launchSettings.json
+/src/insights-backend/obj/
+/src/insights-backend/bin/
+/src/insights-backend/.vs/
